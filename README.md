@@ -6,8 +6,6 @@
 
 *   [PaymentTokenator](#paymenttokenator)
     *   [Parameters](#parameters)
-    *   [createPaymentToken](#createpaymenttoken)
-        *   [Parameters](#parameters-1)
     *   [sendPayment](#sendpayment)
         *   [Parameters](#parameters-2)
     *   [acceptPayment](#acceptpayment)
