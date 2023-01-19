@@ -6,6 +6,7 @@
   "author": "Peer-to-peer Privacy Systems Research, LLC",
   "license": "Open BSV License",
   "scripts": {
+    "doc": "documentation readme --section=API src/PaymentTokenator.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "standard --fix .",

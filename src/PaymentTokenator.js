@@ -23,7 +23,7 @@ class PaymentTokenator extends Tokenator {
    * @param {Object} payment The payment object
    * @param {string} payment.recipient The recipient of the payment
    * @param {Number} payment.amount The amount in satoshis to send
-   * @returns
+   * @returns {Object} a valid payment token
    */
   async createPaymentToken (payment) {
     // Derive a new public key for the recipient according to the P2PKH Payment Protocol.
@@ -77,7 +77,12 @@ class PaymentTokenator extends Tokenator {
   }
 
   /**
-   *
+   * Accepts a payment into the default basket
+   * @param {Object} payment The payment object
+   * @param {Number} payment.messageId The Id of the paymentMessage
+   * @param {String} payment.sender The identityKey of the sender
+   * @param {Number} payment.amount The amount of the payment
+   * @param {Object} payment.token containing the P2PKH derivation instructions
    * @returns
    */
   async acceptPayment (payment) {
@@ -124,7 +129,7 @@ class PaymentTokenator extends Tokenator {
 
   /**
    * Lists incoming Bitcoin payments
-   * @returns {Array} An array of payments to receive
+   * @returns {Array} of payments to receive
    */
   async listIncomingPayments () {
     const messages = await this.listMessages({ messageBox: [STANDARD_PAYMENT_MESSAGEBOX] })
