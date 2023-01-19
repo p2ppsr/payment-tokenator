@@ -1,0 +1,31 @@
+{
+  "name": "payment-tokenator",
+  "version": "0.1.0",
+  "description": "A Tokenator for P2P Payments",
+  "main": "src/PaymentTokenator.js",
+  "author": "Peer-to-peer Privacy Systems Research, LLC",
+  "license": "Open BSV License",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "standard --fix .",
+    "build": "webpack --config webpack.prod.js",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "documentation": "^13.2.5",
+    "jest": "^26.6.3",
+    "node-polyfill-webpack-plugin": "^1.1.4",
+    "standard": "^17.0.0",
+    "webpack": "^5.73.0",
+    "webpack-bundle-analyzer": "^4.7.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.9.2",
+    "webpack-merge": "^5.8.0"
+  },
+  "dependencies": {
+    "@babbage/sdk": "^0.4.20",
+    "babbage-bsv": "^0.1.1",
+    "utxoninja": "^0.2.47"
+  }
+}
