@@ -20,7 +20,7 @@ const init = async () => {
     })
     // Send a payment using Babbage
     await tokenator.sendPayment({
-        recipient: johnSmith
+        recipient: johnSmith,
         amount: 1033 // satoshis
     })
 
