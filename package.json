@@ -1,7 +1,7 @@
 {
   "name": "payment-tokenator",
   "version": "0.1.0",
-  "description": "A Tokenator for P2P Payments",
+  "description": "Tokenator for P2P Payments",
   "main": "src/PaymentTokenator.js",
   "author": "Peer-to-peer Privacy Systems Research, LLC",
   "license": "Open BSV License",
@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@babbage/sdk": "^0.4.20",
+    "@babbage/tokenator": "^0.1.0",
     "babbage-bsv": "^0.1.1",
     "utxoninja": "^0.2.47"
   }
