@@ -110,7 +110,7 @@ class PaymentTokenator extends Tokenator {
         note: 'PeerServ payment',
         amount: payment.amount,
         derivationPrefix: payment.token.derivationPrefix,
-        transaction: payment.tokens.transaction
+        transaction: payment.token.transaction
       })
       if (paymentResult.status !== 'success') {
         throw new Error('Payment not processed')
@@ -132,7 +132,7 @@ class PaymentTokenator extends Tokenator {
    * @returns {Array} of payments to receive
    */
   async listIncomingPayments () {
-    const messages = await this.listMessages({ messageBox: [STANDARD_PAYMENT_MESSAGEBOX] })
+    const messages = await this.listMessages({ messageBox: STANDARD_PAYMENT_MESSAGEBOX })
     const payments = messages.map(x => {
       return {
         messageId: x.messageId,
