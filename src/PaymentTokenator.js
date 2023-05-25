@@ -1,5 +1,5 @@
 const Tokenator = require('@babbage/tokenator')
-const BabbageSDK = require('@babbage/sdk')
+const BabbageSDK = require('@babbage/wrapped-sdk')
 const Ninja = require('utxoninja')
 const bsv = require('babbage-bsv')
 
