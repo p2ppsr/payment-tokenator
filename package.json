@@ -1,6 +1,6 @@
 {
   "name": "payment-tokenator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Tokenator for P2P Payments",
   "main": "src/PaymentTokenator.js",
   "author": "Peer-to-peer Privacy Systems Research, LLC",
@@ -25,9 +25,9 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "@babbage/sdk": "^0.4.20",
-    "@babbage/tokenator": "^0.1.0",
+    "@babbage/tokenator": "^0.1.1",
+    "@babbage/wrapped-sdk": "^0.1.1",
     "babbage-bsv": "^0.1.1",
-    "utxoninja": "^0.2.47"
+    "utxoninja": "^0.2.52"
   }
 }

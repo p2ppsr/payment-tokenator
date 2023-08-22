@@ -22,7 +22,7 @@ module.exports = {
       'babbage-bsv': path.resolve(__dirname, 'node_modules/babbage-bsv'),
       'safe-buffer': path.resolve(__dirname, 'node_modules/safe-buffer'),
       'bn.js': path.resolve(__dirname, 'node_modules/bn.js'),
-      'babbage-sdk': path.resolve(__dirname, 'node_modules/babbage-sdk'),
+      '@babbage/wrapped-sdk': path.resolve(__dirname, 'node_modules/@babbage/wrapped-sdk'),
       'authrite-js': path.resolve(__dirname, 'node_modules/authrite-js')
     }
   }
