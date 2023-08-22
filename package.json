@@ -27,7 +27,7 @@
   "dependencies": {
     "@babbage/tokenator": "^0.1.1",
     "@babbage/wrapped-sdk": "^0.1.1",
-    "babbage-bsv": "^0.1.1",
+    "babbage-bsv": "^0.2.0",
     "utxoninja": "^0.2.52"
   }
 }
