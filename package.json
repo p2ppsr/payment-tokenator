@@ -1,6 +1,6 @@
 {
   "name": "payment-tokenator",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Tokenator for P2P Payments",
   "main": "src/PaymentTokenator.js",
   "author": "Peer-to-peer Privacy Systems Research, LLC",
