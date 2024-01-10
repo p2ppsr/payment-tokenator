@@ -100,7 +100,7 @@ class PaymentTokenator extends Tokenator {
       return ninja
     }
 
-    // Recieve payment using submitDirectTransaction
+    // Receive payment using submitDirectTransaction
     try {
       // Note: custom acceptance validation could be added here.
       // Example: if (message.amount > 100000000) {...acceptance criteria}
@@ -112,10 +112,8 @@ class PaymentTokenator extends Tokenator {
         derivationPrefix: payment.token.derivationPrefix,
         transaction: payment.token.transaction
       })
-      if (paymentResult.status !== 'success') {
-        throw new Error('Payment not processed')
-      }
-      // Acknowledge the payment(s) has been recieved
+
+      // Acknowledge the payment(s) has been received
       await this.acknowledgeMessage({ messageIds: [payment.messageId] })
       return {
         payment,
