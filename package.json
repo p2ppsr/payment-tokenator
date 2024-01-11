@@ -28,6 +28,6 @@
     "@babbage/tokenator": "^0.1.13",
     "@babbage/wrapped-sdk": "^0.1.1",
     "babbage-bsv": "^0.2.4",
-    "ninja-base": "^0.2.118"
+    "ninja-base": "^0.2.119"
   }
 }
