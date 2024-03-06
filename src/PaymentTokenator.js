@@ -135,8 +135,15 @@ class PaymentTokenator extends Tokenator {
         transaction: payment.token.transaction
       })
 
-      // Acknowledge the payment(s) has been received
-      await this.acknowledgeMessage({ messageIds: [payment.messageId] })
+      // Acknowledge the payment(s) has been received, if they haven't been already
+      try {
+        await this.acknowledgeMessage({ messageIds: [payment.messageId] })
+      } catch (error) {
+        // If the error is invalid acknowledgement, we can assume it has already been acknowledged.
+        if (error.code !== 'ERR_INVALID_ACKNOWLEDGMENT') {
+          throw error
+        }
+      }
       return {
         payment,
         paymentResult
