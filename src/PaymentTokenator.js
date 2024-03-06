@@ -12,7 +12,7 @@ const STANDARD_PAYMENT_MESSAGEBOX = 'payment_inbox'
  * @param {String} [obj.clientPrivateKey] A private key to use for mutual authentication with Authrite. (Optional - Defaults to Babbage signing strategy).
  */
 class PaymentTokenator extends Tokenator {
-  constructor ({
+  constructor({
     peerServHost = 'https://staging-peerserv.babbage.systems',
     clientPrivateKey
   } = {}) {
@@ -25,7 +25,7 @@ class PaymentTokenator extends Tokenator {
    * @param {Number} payment.amount The amount in satoshis to send
    * @returns {Object} a valid payment token
    */
-  async createPaymentToken (payment) {
+  async createPaymentToken(payment) {
     // Derive a new public key for the recipient according to the P2PKH Payment Protocol.
     const derivationPrefix = require('crypto')
       .randomBytes(10)
@@ -71,9 +71,31 @@ class PaymentTokenator extends Tokenator {
    * @param {string} payment.recipient The recipient of the payment
    * @param {Number} payment.amount The amount in satoshis to send
    */
-  async sendPayment (payment) {
+  async sendPayment(payment) {
     const paymentToken = await this.createPaymentToken(payment)
     return await this.sendMessage(paymentToken)
+  }
+
+  /**
+   * Sends Bitcoin to a PeerServ recipient over web sockets
+   * @param {Object} payment The payment object
+   * @param {string} payment.recipient The recipient of the payment
+   * @param {Number} payment.amount The amount in satoshis to send
+   */
+  async sendLivePayment(payment) {
+    const paymentToken = await this.createPaymentToken(payment)
+    await this.sendLiveMessage(paymentToken)
+  }
+
+  /**
+   * Listens for incoming Bitcoin payments over web sockets
+   * @param {Object} obj
+   */
+  async listenForLivePayments({ onPayment }) {
+    await this.listenForLiveMessages({
+      onMessage: onPayment,
+      messageBox: STANDARD_PAYMENT_MESSAGEBOX
+    })
   }
 
   /**
@@ -85,7 +107,7 @@ class PaymentTokenator extends Tokenator {
    * @param {Object} payment.token containing the P2PKH derivation instructions
    * @returns
    */
-  async acceptPayment (payment) {
+  async acceptPayment(payment) {
     // Figure out what the signing strategy should be
     const getLib = () => {
       if (!this.clientPrivateKey) {
@@ -129,7 +151,7 @@ class PaymentTokenator extends Tokenator {
    * Lists incoming Bitcoin payments
    * @returns {Array} of payments to receive
    */
-  async listIncomingPayments () {
+  async listIncomingPayments() {
     const messages = await this.listMessages({ messageBox: STANDARD_PAYMENT_MESSAGEBOX })
     const payments = messages.map(x => {
       return {
