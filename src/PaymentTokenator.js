@@ -91,10 +91,11 @@ class PaymentTokenator extends Tokenator {
    * Listens for incoming Bitcoin payments over web sockets
    * @param {Object} obj
    */
-  async listenForLivePayments({ onPayment }) {
+  async listenForLivePayments({ onPayment, autoAcknowledge = true }) {
     await this.listenForLiveMessages({
       onMessage: onPayment,
-      messageBox: STANDARD_PAYMENT_MESSAGEBOX
+      messageBox: STANDARD_PAYMENT_MESSAGEBOX,
+      autoAcknowledge
     })
   }
 
