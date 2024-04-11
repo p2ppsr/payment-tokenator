@@ -156,6 +156,80 @@ class PaymentTokenator extends Tokenator {
   }
 
   /**
+   * Rejects an incoming payment
+   * @param {Object} payment The payment object
+   * @param {Number} payment.messageId The Id of the paymentMessage
+   * @param {String} payment.sender The identityKey of the sender
+   * @param {Number} payment.amount The amount of the payment
+   * @param {Object} payment.token containing the P2PKH derivation instructions
+   * @returns
+   */
+  async rejectPayment(payment) {
+    // Figure out what the signing strategy should be
+    const getLib = () => {
+      if (!this.clientPrivateKey) {
+        return BabbageSDK
+      }
+      const ninja = new Ninja({
+        privateKey: this.clientPrivateKey,
+        config: {
+          dojoURL: 'https://staging-dojo.babbage.systems'
+        }
+      })
+      return ninja
+    }
+
+    // Reject payment using createAction
+    try {
+      // Create a new P2PKH output to send back to the sender
+      const outputInfo = await this.getP2PKHOutputInfo({ recipient: payment.sender })
+      const prevTx = new bsv.Transaction(payment.token.transaction.rawTx)
+      const defaultVout = 0
+
+      // Create a new TX to send back the incoming payment
+      const outgoingTx = await BabbageSDK.createAction({
+        inputs: {
+          [payment.token.transaction.txid]: {
+            ...payment.token.transaction,
+            outputsToRedeem: [{
+              index: defaultVout,
+              unlockingScript: prevTx.outputs[defaultVout].script.toHex()
+            }]
+          }
+        },
+        outputs: [{
+          script: outputInfo.script,
+          satoshis: payment.token.amount
+        }],
+        description: 'Reject an incoming payment'
+      })
+
+      // Acknowledge the payment message has been received, if they haven't been already
+      try {
+        await this.acknowledgeMessage({ messageIds: [payment.messageId] })
+      } catch (error) {
+        // If the error is invalid acknowledgement, we can assume it has already been acknowledged.
+        if (error.code !== 'ERR_INVALID_ACKNOWLEDGMENT') {
+          throw error
+        }
+      }
+
+      // TODO: send outgoingTx back to sender
+      return await this.sendMessage(payment.body = {
+        derivationPrefix: outputInfo.derivationPrefix,
+        transaction: {
+          ...outgoingTx,
+          outputs: [{ vout: 0, satoshis: payment.token.amount, derivationSuffix: outputInfo.derivationSuffix }]
+        },
+        amount: payment.token.amount
+      })
+    } catch (e) {
+      console.log(`Error: ${e}`)
+      return 'Unable to send back rejected payment!'
+    }
+  }
+
+  /**
    * Lists incoming Bitcoin payments
    * @returns {Array} of payments to receive
    */
@@ -172,5 +246,36 @@ class PaymentTokenator extends Tokenator {
 
     return payments
   }
+
+
+  async getP2PKHOutputInfo({ recipient }) {
+    // Derive a new public key for the recipient according to the P2PKH Payment Protocol.
+    const derivationPrefix = require('crypto')
+      .randomBytes(10)
+      .toString('base64')
+    const derivationSuffix = require('crypto')
+      .randomBytes(10)
+      .toString('base64')
+    const derivedPublicKey = await BabbageSDK.getPublicKey({
+      protocolID: [2, '3241645161d8'],
+      keyID: `${derivationPrefix} ${derivationSuffix}`,
+      counterparty: recipient
+    })
+
+    // Create a P2PK Bitcoin script
+    const script = new bsv.Script(
+      bsv.Script.fromAddress(bsv.Address.fromPublicKey(
+        bsv.PublicKey.fromString(derivedPublicKey)
+      ))
+    ).toHex()
+
+    return {
+      derivationPrefix,
+      derivationSuffix,
+      derivedPublicKey,
+      script
+    }
+  }
+
 }
 module.exports = PaymentTokenator
