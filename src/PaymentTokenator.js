@@ -196,7 +196,8 @@ class PaymentTokenator extends Tokenator {
         }
       }
 
-      // TODO: send outgoingTx back to sender
+      // Send outgoingTx back to sender
+      // TODO: Validate the standard structure of a Tokenator payment (small discrepancies such as amount)
       return await this.sendMessage(payment.body = {
         derivationPrefix: outputInfo.derivationPrefix,
         transaction: {
