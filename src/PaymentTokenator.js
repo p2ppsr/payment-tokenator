@@ -168,23 +168,87 @@ class PaymentTokenator extends Tokenator {
       const prevTx = new bsv.Transaction(payment.token.transaction.rawTx)
       const defaultVout = 0
 
-      // Create a new TX to send back the incoming payment
-      const outgoingTx = await BabbageSDK.createAction({
-        inputs: {
-          [payment.token.transaction.txid]: {
-            ...payment.token.transaction,
-            outputsToRedeem: [{
-              index: defaultVout,
-              unlockingScript: prevTx.outputs[defaultVout].script.toHex()
-            }]
-          }
-        },
-        outputs: [{
-          script: outputInfo.script,
-          satoshis: payment.token.amount
-        }],
-        description: 'Reject an incoming payment'
+      // Construct a new transaction to send back
+      const newTx = new bsv.Transaction()
+
+      // Add new output
+      newTx.addOutput(new bsv.Transaction.Output({
+        script: bsv.Script.fromHex(outputInfo.script),
+        satoshis: payment.token.amount
+      }))
+
+      const sighashType = bsv.crypto.Signature.SIGHASH_FORKID |
+        bsv.crypto.Signature.SIGHASH_SINGLE |
+        bsv.crypto.Signature.SIGHASH_ANYONECANPAY
+
+      // Sign the preimage and create a signature
+      const hashbuf = bsv.crypto.Hash.sha256(bsv.Transaction.sighash.sighashPreimage(
+        newTx,
+        sighashType,
+        defaultVout,
+        prevTx.outputs[defaultVout].script,
+        new bsv.crypto.BN(payment.token.amount)
+      ))
+      let signature = await BabbageSDK.createSignature({
+        data: hashbuf,
+        protocolID: [2, '3241645161d8'],
+        keyID: `${outputInfo.derivationPrefix} ${outputInfo.derivationSuffix}`,
+        counterparty: payment.sender,
+        description: 'Sign to send back payment',
+        privileged: false
       })
+
+      signature = bsv.crypto.Signature.fromBuffer(Buffer.from(signature))
+      signature.nhashtype = sighashType
+
+      newTx.inputs[0].setScript(prevTx.outputs[defaultVout].script) // ?
+
+      const newRawTx = newTx.serialize() // ?
+
+      const paymentEnvelope = {
+        derivationPrefix: outputInfo.derivationPrefix,
+        transaction: {
+          rawTx: newRawTx,
+          outputs: [{
+            vout: 0,
+            satoshis: payment.token.amount,
+            derivationSuffix: outputInfo.derivationSuffix
+          }]
+        }
+      }
+
+      // Test accepting it back
+
+      const paymentResult = await getLib().submitDirectTransaction({
+        protocol: '3241645161d8',
+        senderIdentityKey: payment.sender,
+        note: 'PeerServ payment',
+        amount: payment.amount,
+        derivationPrefix: paymentEnvelope.derivationPrefix,
+        transaction: paymentEnvelope.transaction
+      })
+
+      // TODO: Set the unlocking script
+      // TODO: Serialize the TX
+      // TODO: Construct a BRC-8 envelope to send back
+
+      // Create a new TX to send back the incoming payment
+      // const outgoingTx = await BabbageSDK.createAction({
+      //   inputs: {
+      //     [payment.token.transaction.txid]: {
+      //       ...payment.token.transaction,
+      //       outputsToRedeem: [{
+      //         index: defaultVout,
+      //         unlockingScript: prevTx.outputs[defaultVout].script.toHex()
+      //       }]
+      //     }
+      //   },
+      //   outputs: [{
+      //     script: outputInfo.script,
+      //     satoshis: payment.token.amount
+      //   }],
+      //   description: 'Reject an incoming payment'
+      // })
 
       // Acknowledge the payment message has been received, if they haven't been already
       try {
@@ -198,14 +262,15 @@ class PaymentTokenator extends Tokenator {
 
       // Send outgoingTx back to sender
       // TODO: Validate the standard structure of a Tokenator payment (small discrepancies such as amount)
-      return await this.sendMessage(payment.body = {
-        derivationPrefix: outputInfo.derivationPrefix,
-        transaction: {
-          ...outgoingTx,
-          outputs: [{ vout: 0, satoshis: payment.token.amount, derivationSuffix: outputInfo.derivationSuffix }]
-        },
-        amount: payment.token.amount
-      })
+      // return await this.sendMessage(payment.body = {
+      //   derivationPrefix: outputInfo.derivationPrefix,
+      //   transaction: {
+      //     ...outgoingTx,
+      //     outputs: [{ vout: 0, satoshis: payment.token.amount, derivationSuffix: outputInfo.derivationSuffix }]
+      //   },
+      //   amount: payment.token.amount
+      // })
+      return {}
     } catch (e) {
       console.log(`Error: ${e}`)
       return 'Unable to send back rejected payment!'
