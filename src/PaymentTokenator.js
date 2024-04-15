@@ -26,39 +26,21 @@ class PaymentTokenator extends Tokenator {
    * @returns {Object} a valid payment token
    */
   async createPaymentToken(payment) {
-    // Derive a new public key for the recipient according to the P2PKH Payment Protocol.
-    const derivationPrefix = require('crypto')
-      .randomBytes(10)
-      .toString('base64')
-    const derivationSuffix = require('crypto')
-      .randomBytes(10)
-      .toString('base64')
-    const derivedPublicKey = await BabbageSDK.getPublicKey({
-      protocolID: [2, '3241645161d8'],
-      keyID: `${derivationPrefix} ${derivationSuffix}`,
-      counterparty: payment.recipient
-    })
-
-    // Create a P2PK Bitcoin script
-    const script = new bsv.Script(
-      bsv.Script.fromAddress(bsv.Address.fromPublicKey(
-        bsv.PublicKey.fromString(derivedPublicKey)
-      ))
-    ).toHex()
+    const outputInfo = await this.getP2PKHOutputInfo({ recipient: payment.sender })
 
     // Create a new Bitcoin transaction
     const paymentAction = await BabbageSDK.createAction({
       description: 'Tokenator payment',
-      outputs: [{ script, satoshis: payment.amount }]
+      outputs: [{ script: outputInfo.script, satoshis: payment.amount }]
     })
 
     // Configure the standard messageBox and payment body
     payment.messageBox = STANDARD_PAYMENT_MESSAGEBOX
     payment.body = {
-      derivationPrefix,
+      derivationPrefix: outputInfo.derivationPrefix,
       transaction: {
         ...paymentAction,
-        outputs: [{ vout: 0, satoshis: payment.amount, derivationSuffix }]
+        outputs: [{ vout: 0, satoshis: payment.amount, derivationSuffix: outputInfo.derivationSuffix }]
       },
       amount: payment.amount
     }
@@ -156,6 +138,26 @@ class PaymentTokenator extends Tokenator {
   }
 
   /**
+   * Rejects an incoming payment
+   * @param {Object} payment The payment object
+   * @param {Number} payment.messageId The Id of the paymentMessage
+   * @param {String} payment.sender The identityKey of the sender
+   * @param {Number} payment.amount The amount of the payment
+   * @param {Object} payment.token containing the P2PKH derivation instructions
+   * @returns
+   */
+  async rejectPayment(payment) {
+    // TODO: This is non-ideal because we are still receiving the initial payment, before sending new UTXOs back.
+    // If the UTXO we just received was tainted, it is now part of our wallet. The correct approach would be
+    // to consume the UTXO, sign it back to the sender (with `createSignature`), and not involve any of our other UTXOs.
+    await this.acceptPayment(payment)
+    await this.sendPayment({
+      recipient: payment.sender,
+      amount: payment.amount - 1000 // fee
+    })
+  }
+
+  /**
    * Lists incoming Bitcoin payments
    * @returns {Array} of payments to receive
    */
@@ -171,6 +173,41 @@ class PaymentTokenator extends Tokenator {
     })
 
     return payments
+  }
+
+  /**
+   * Helper function for deriving P2PKH payment info
+   * @param {object} obj
+   * @param {string} obj.recipient identity key of the recipient of the P2PKH payment
+   * @returns
+   */
+  async getP2PKHOutputInfo({ recipient }) {
+    // Derive a new public key for the recipient according to the P2PKH Payment Protocol.
+    const derivationPrefix = require('crypto')
+      .randomBytes(10)
+      .toString('base64')
+    const derivationSuffix = require('crypto')
+      .randomBytes(10)
+      .toString('base64')
+    const derivedPublicKey = await BabbageSDK.getPublicKey({
+      protocolID: [2, '3241645161d8'],
+      keyID: `${derivationPrefix} ${derivationSuffix}`,
+      counterparty: recipient
+    })
+
+    // Create a P2PK Bitcoin script
+    const script = new bsv.Script(
+      bsv.Script.fromAddress(bsv.Address.fromPublicKey(
+        bsv.PublicKey.fromString(derivedPublicKey)
+      ))
+    ).toHex()
+
+    return {
+      derivationPrefix,
+      derivationSuffix,
+      derivedPublicKey,
+      script
+    }
   }
 }
 module.exports = PaymentTokenator
