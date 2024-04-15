@@ -54,8 +54,7 @@ class PaymentTokenator extends Tokenator {
    * @param {Number} payment.amount The amount in satoshis to send
    */
   async sendPayment(payment) {
-    const paymentToken = await this.createPaymentToken(payment)
-    return await this.sendMessage(paymentToken)
+    return await this.sendLivePayment(payment)
   }
 
   /**
@@ -147,13 +146,19 @@ class PaymentTokenator extends Tokenator {
    * @returns
    */
   async rejectPayment(payment) {
+    if (payment.token.amount - 1000 < 1000) {
+      // We do not handle payments under 1000 satoshis
+      await this.acknowledgeMessage({ messageIds: [payment.messageId] })
+      return
+    }
+
     // TODO: This is non-ideal because we are still receiving the initial payment, before sending new UTXOs back.
     // If the UTXO we just received was tainted, it is now part of our wallet. The correct approach would be
     // to consume the UTXO, sign it back to the sender (with `createSignature`), and not involve any of our other UTXOs.
     await this.acceptPayment(payment)
     await this.sendPayment({
       recipient: payment.sender,
-      amount: payment.amount - 1000 // fee
+      amount: payment.token.amount - 1000 // fee
     })
   }
 
